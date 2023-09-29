@@ -1,0 +1,10 @@
+name: transactional
+services:
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=cats
+    ports:
+      - 5432:5432

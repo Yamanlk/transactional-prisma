@@ -1,0 +1,42 @@
+{
+  "name": "@transactional/prisma",
+  "version": "1.0.0",
+  "description": "\"@transactional/prisma\" is an npm package that offers a \"@Transactional\" method decorator for running your queries inside a transaction seamlessly. It achieves this by leveraging AsyncLocalStorage.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "test": "node --require ts-node/register ./test/index.ts",
+    "build": "tsc"
+  },
+  "keywords": [
+    "prisma",
+    "transactional"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yamanlk/transactional-prisma.git"
+  },
+  "bugs": {
+    "email": "yamanlakis@gmail.com",
+    "url": "https://github.com/Yamanlk/transactional-prisma/issues"
+  },
+  "homepage": "https://github.com/Yamanlk/transactional-prisma",
+  "files": [
+    "dist"
+  ],
+  "author": "Yaman Lakis",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.7.1",
+    "glob": "^10.3.10",
+    "prisma": "^5.3.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@transactional/core": "file:../core"
+  },
+  "peerDependencies": {
+    "@prisma/client": "^5.3.1"
+  }
+}
