@@ -41,8 +41,10 @@ jobs:
           DATABASE_URL: postgresql://user:password@postgres:5432/cats?schema=public
       - name: Build
         run: npm run build
+      - name: work around permission issue
+        run: git config --global --add safe.directory /__w/transactional-prisma/transactional-prisma
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: git status
+        run: npx semantic-release
