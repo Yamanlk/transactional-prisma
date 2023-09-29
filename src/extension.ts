@@ -16,6 +16,7 @@ const extension = Prisma.defineExtension((prisma) => {
         const tx = (store.tx = store.tx ?? (await transaction(prisma)));
 
         store.$commit = tx.$commit;
+        store.$rollback = tx.$rollback;
 
         if (model) {
           return tx[model][operation](args);
