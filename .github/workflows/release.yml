@@ -18,6 +18,13 @@ jobs:
       issues: write # to be able to comment on released issues
       pull-requests: write # to be able to comment on released pull requests
       id-token: write # to enable use of OIDC for npm provenance
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: cats
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -31,6 +38,10 @@ jobs:
         run: npm clean-install
       - name: Verify the integrity of provenance attestations and registry signatures for installed dependencies
         run: npm audit signatures
+      - name: Test
+        run: npm run test:postgres:setup && npm test
+        env:
+          DATABASE_URL: postgresql://user:password@postgres:5432/cats?schema=public
       - name: Build
         run: npm run build
       - name: Release

@@ -5,6 +5,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
+    "test:postgres:setup": "npm exec prisma migrate deploy -- --schema ./test/postgres/prisma/schema.prisma && npm exec prisma generate -- --schema ./test/postgres/prisma/schema.prisma",
     "test": "node --require ts-node/register ./test/index.ts",
     "build": "tsc"
   },
@@ -33,10 +34,8 @@
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   },
-  "dependencies": {
-    "@transactional/core": "file:../core"
-  },
   "peerDependencies": {
-    "@prisma/client": "^5.3.1"
+    "@prisma/client": "^5.3.1",
+    "@transactional/core": "^1.1.0"
   }
 }
