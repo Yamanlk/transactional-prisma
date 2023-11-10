@@ -1,8 +1,8 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { TRANSACTIONAL_CONTEXT } from "@transactional/core";
 import { transaction } from "./flat-transaction";
 
-const extension = Prisma.defineExtension((prisma) => {
+const prismaTransactional = Prisma.defineExtension((prisma) => {
   return prisma.$extends({
     query: {
       $allOperations: async ({ args, model, operation, query }) => {
@@ -13,7 +13,8 @@ const extension = Prisma.defineExtension((prisma) => {
           return query(args);
         }
 
-        const tx = (store.tx = store.tx ?? (await transaction(prisma)));
+        const tx = (store.tx =
+          store.tx ?? (await transaction(prisma, store.options)));
 
         store.$commit = tx.$commit;
         store.$rollback = tx.$rollback;
@@ -28,4 +29,6 @@ const extension = Prisma.defineExtension((prisma) => {
   });
 });
 
-export { extension };
+export type TransactionalOptions = Parameters<PrismaClient["$transaction"]>[1];
+
+export { prismaTransactional };

@@ -8,7 +8,8 @@ export type FlatTransactionClient = Prisma.TransactionClient & {
 const ROLLBACK = { [Symbol.for("prisma.client.extension.rollback")]: true };
 
 export async function transaction(
-  prisma: PrismaClient
+  prisma: PrismaClient,
+  options?: Parameters<PrismaClient["$transaction"]>[1]
 ): Promise<FlatTransactionClient> {
   if (!isTransactionSupported(prisma)) {
     throw new Error("Transactions are not supported by this client");
@@ -31,7 +32,7 @@ export async function transaction(
     setTxClient(tx);
 
     return txPromise;
-  });
+  }, options);
 
   return new Proxy(await txClient, {
     get(target, prop) {

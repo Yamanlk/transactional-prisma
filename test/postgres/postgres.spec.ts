@@ -2,10 +2,10 @@ import { PrismaClient } from "@prisma/postgres";
 import { Propagation, transactional } from "@transactional/core";
 import assert from "node:assert";
 import { beforeEach, describe, it } from "node:test";
-import { extension } from "../../src";
+import { prismaTransactional } from "../../src";
 
 describe("Postgres", () => {
-  let prisma = new PrismaClient({}).$extends(extension);
+  let prisma = new PrismaClient({}).$extends(prismaTransactional);
 
   beforeEach(async () => {
     await prisma.cat.deleteMany({});
@@ -77,6 +77,31 @@ describe("Postgres", () => {
     try {
       await method();
     } catch (error) {}
+    const count = await prisma.cat.count();
+
+    // then
+    assert.equal(count, 1);
+  });
+
+  it("should pass options", async () => {
+    // given
+    const method = async () => {
+      await transactional<Parameters<PrismaClient["$transaction"]>[1]>(
+        async () => {
+          await prisma.cat.create({});
+          await new Promise((res, rej) => {
+            setTimeout(() => {
+              res(true);
+            }, 9_000);
+          });
+        },
+        Propagation.REQUIRED,
+        { timeout: 10_000 }
+      )();
+    };
+
+    // when
+    await method();
     const count = await prisma.cat.count();
 
     // then
