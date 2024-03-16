@@ -1,5 +1,10 @@
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { PrismaClient } from "@prisma/postgres";
-import { Propagation, transactional } from "@transactional/core";
+import {
+  Propagation,
+  TRANSACTIONAL_CONTEXT,
+  transactional,
+} from "@transactional/core";
 import assert from "node:assert";
 import { beforeEach, describe, it } from "node:test";
 import { prismaTransactional } from "../../src";
@@ -106,5 +111,43 @@ describe("Postgres", () => {
 
     // then
     assert.equal(count, 1);
+  });
+
+  it("should throw source error after rollback", async () => {
+    // given
+    const method = async () => {
+      await transactional(async () => {
+        await prisma.cat.create({ data: { id: 1 } });
+        await prisma.cat.create({ data: { id: 1 } });
+      }, Propagation.REQUIRED)();
+    };
+
+    // when
+    try {
+      await method();
+    } catch (error) {
+      // then
+
+      /* must throw unique constraint faild error */
+      assert.ok((error as PrismaClientKnownRequestError).code === "P2002");
+    }
+  });
+
+  it("should reject with rollback symbol", async () => {
+    // given
+    const method = transactional(async () => {
+      await prisma.cat.create({ data: { id: 1 } });
+
+      await TRANSACTIONAL_CONTEXT.getStore()?.$rollback!();
+    }, Propagation.REQUIRED);
+
+    // when
+    try {
+      await method();
+    } catch (error) {
+      // then
+
+      assert.ok((error as any)[Symbol.for("prisma.client.extension.rollback")]);
+    }
   });
 });

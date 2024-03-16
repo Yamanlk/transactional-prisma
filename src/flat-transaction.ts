@@ -19,7 +19,7 @@ export async function transaction(
 
   let commit: () => void;
   let rollback: () => void;
-  const txPromise = new Promise((resolve, reject) => {
+  const txPromise = new Promise<undefined>((resolve, reject) => {
     commit = () => resolve(undefined);
     rollback = () => reject(ROLLBACK);
   });
@@ -28,24 +28,39 @@ export async function transaction(
       setTxClient = (tx) => resolve(tx);
     });
 
-  const tx = prisma["$transaction"]((tx: Prisma.TransactionClient) => {
-    setTxClient(tx);
+  const tx: Promise<undefined> = prisma["$transaction"](
+    (tx: Prisma.TransactionClient) => {
+      setTxClient(tx);
 
-    return txPromise;
-  }, options);
+      return txPromise;
+    },
+    options
+  );
 
   return new Proxy(await txClient, {
     get(target, prop) {
       if (prop === "$commit") {
-        return () => {
+        return async () => {
           commit();
-          return tx;
+          // await for tx to be resolved before resolving
+          await tx;
         };
       }
       if (prop === "$rollback") {
-        return () => {
+        return async () => {
           rollback();
-          return tx;
+          try {
+            await tx;
+          } catch (error: any) {
+            // rollback function should resolve with `undefined` in case it rolledback
+            // successfully
+            if (error[Symbol.for("prisma.client.extension.rollback")]) {
+              return undefined;
+            }
+
+            // and it should throw any other errors thrown by tx
+            throw error;
+          }
         };
       }
       return target[prop as keyof typeof target];
