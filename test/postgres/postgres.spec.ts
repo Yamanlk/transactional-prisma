@@ -6,11 +6,12 @@ import {
   transactional,
 } from "@transactional/core";
 import assert from "node:assert";
-import { beforeEach, describe, it } from "node:test";
+import { Mock, beforeEach, describe, it, mock } from "node:test";
 import { prismaTransactional } from "../../src";
 
 describe("Postgres", () => {
-  let prisma = new PrismaClient({}).$extends(prismaTransactional);
+  let baseClient = new PrismaClient({ log: ["query"] });
+  let prisma = baseClient.$extends(prismaTransactional);
 
   beforeEach(async () => {
     await prisma.cat.deleteMany({});
@@ -149,5 +150,23 @@ describe("Postgres", () => {
 
       assert.ok((error as any)[Symbol.for("prisma.client.extension.rollback")]);
     }
+  });
+
+  it("should support running multiple concurrent queries", async () => {
+    // given
+    mock.method(baseClient, "$transaction");
+    const method = transactional(async () => {
+      return Promise.all([prisma.cat.count(), prisma.cat.count()]);
+    }, Propagation.REQUIRED);
+
+    // when
+    await method();
+
+    // then
+    assert.equal(
+      (prisma.$transaction as Mock<PrismaClient["$transaction"]>).mock.calls
+        .length,
+      1
+    );
   });
 });

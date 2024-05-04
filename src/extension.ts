@@ -13,11 +13,20 @@ const prismaTransactional = Prisma.defineExtension((prisma) => {
           return query(args);
         }
 
-        const tx = (store.tx =
-          store.tx ?? (await transaction(prisma, store.options)));
+        /* this is the first query to run inside a transactional function, 
+        so we need to create and attach the transaction to the store  */
+        if (!store.tx) {
+          /* create a transaction and assign it to the current store */
+          store.tx = new Promise(async (resolve, reject) => {
+            const tx = await transaction(prisma, store.options);
+            store.$commit = tx.$commit;
+            store.$rollback = tx.$rollback;
 
-        store.$commit = tx.$commit;
-        store.$rollback = tx.$rollback;
+            resolve(tx);
+          });
+        }
+
+        const tx = await store.tx;
 
         if (model) {
           return tx[model][operation](args);
