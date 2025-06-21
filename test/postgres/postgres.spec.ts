@@ -154,7 +154,8 @@ describe("Postgres", () => {
 
   it("should support running multiple concurrent queries", async () => {
     // given
-    mock.method(baseClient, "$transaction");
+
+    mock.method(PrismaClient.prototype, "$transaction");
     const method = transactional(async () => {
       return Promise.all([prisma.cat.count(), prisma.cat.count()]);
     }, Propagation.REQUIRED);
